@@ -51,6 +51,9 @@ app.use((err, req, res, next) => {
 connectDB();
 
 // Start server
+app.get("/", (req, res) => {
+  res.send("🚀 Smart Cart Backend is Running!");
+});
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
