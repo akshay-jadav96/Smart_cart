@@ -29,20 +29,13 @@ export interface CustomerInfo {
   phone: string;
 }
 
-// Razorpay type declaration
-declare global {
-  interface Window {
-    Razorpay: any;
-  }
-}
-
-const CheckoutDialog = ({ 
-  open, 
-  onOpenChange, 
-  onSubmit, 
+const CheckoutDialog = ({
+  open,
+  onOpenChange,
+  onSubmit,
   isLoading = false,
   cartItems,
-  subtotal 
+  subtotal
 }: CheckoutDialogProps) => {
   const [formData, setFormData] = useState<CustomerInfo>({
     name: "",
@@ -51,7 +44,7 @@ const CheckoutDialog = ({
   });
 
   const [errors, setErrors] = useState<Partial<CustomerInfo>>({});
-  
+
   const tax = subtotal * TAX_RATE;
   const total = subtotal + tax;
   const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -81,7 +74,7 @@ const CheckoutDialog = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (validateForm()) {
       await onSubmit(formData);
     }
@@ -104,7 +97,7 @@ const CheckoutDialog = ({
             Review your order and enter your details to proceed with payment.
           </DialogDescription>
         </DialogHeader>
-        
+
         <ScrollArea className="flex-1 px-5 sm:px-6">
           <form onSubmit={handleSubmit} id="checkout-form">
             {/* Product List Section */}
@@ -210,7 +203,7 @@ const CheckoutDialog = ({
             </div>
           </form>
         </ScrollArea>
-        
+
         <DialogFooter className="px-5 pb-5 pt-4 sm:px-6 sm:pb-6 gap-2">
           <Button
             type="button"
@@ -221,8 +214,8 @@ const CheckoutDialog = ({
           >
             Cancel
           </Button>
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             form="checkout-form"
             disabled={isLoading}
             className="flex-1 sm:flex-none min-w-[120px]"

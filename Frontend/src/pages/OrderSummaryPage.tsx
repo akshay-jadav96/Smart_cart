@@ -10,13 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, ShoppingBag, CreditCard, Tag, Receipt, Loader2 } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_your_key_id";
-
-declare global {
-  interface Window {
-    Razorpay: any;
-  }
-}
 
 interface CartResponse {
   success: boolean;
@@ -107,14 +100,13 @@ const OrderSummaryPage = () => {
     setPaymentLoading(true);
 
     try {
-      // Step 1: Create order in database
       const orderResponse = await fetch(`${API_URL}/api/orders`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           cartId: currentCartId,
           customerInfo,
-          paymentInfo: { method: "razorpay", status: "pending" },
+          paymentInfo: { method: "cash", status: "completed" },
           notes: "",
         }),
       });
@@ -125,93 +117,16 @@ const OrderSummaryPage = () => {
       }
 
       const createdOrder = orderResult.data;
-
-      // Step 2: Create Razorpay order — use the locally computed total
-      // (subtotal + tax) which matches what is shown on the order summary page.
-      // Do NOT use createdOrder.totalAmount from the API response to avoid
-      // any serialisation / rounding mismatch between the cart subtotal and
-      // the tax-inclusive total.
-      const rzpOrderResponse = await fetch(`${API_URL}/api/payment/create-order`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount: total,            // total = subtotal + tax, computed on this page
-          currency: "INR",
-          receipt: createdOrder.orderId,
-          notes: { orderId: createdOrder.orderId, cartId: currentCartId },
-        }),
-      });
-
-      const rzpOrderResult = await rzpOrderResponse.json();
-      if (!rzpOrderResponse.ok || !rzpOrderResult.success) {
-        throw new Error(rzpOrderResult.message || "Failed to create payment order");
-      }
-
-      const razorpayOrder = rzpOrderResult.data;
-
-      // Step 3: Open Razorpay checkout
       setCustomerInfoOpen(false);
-
-      const options = {
-        key: RAZORPAY_KEY_ID,
-        amount: razorpayOrder.amount,
-        currency: razorpayOrder.currency,
-        name: "Embedded Elite's Store",
-        description: `Order ${createdOrder.orderId}`,
-        order_id: razorpayOrder.id,
-        handler: async function (response: any) {
-          try {
-            // Step 4: Verify payment
-            const verifyResponse = await fetch(`${API_URL}/api/payment/verify`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                orderId: createdOrder.orderId,
-              }),
-            });
-
-            const verifyResult = await verifyResponse.json();
-            if (!verifyResponse.ok || !verifyResult.success) {
-              throw new Error(verifyResult.message || "Payment verification failed");
-            }
-
-            toast({ title: "Payment Successful!", description: "Your order has been confirmed." });
-            navigate(`/order/${createdOrder.orderId}`);
-          } catch (err) {
-            toast({
-              variant: "destructive",
-              title: "Payment Verification Failed",
-              description: err instanceof Error ? err.message : "Failed to verify payment",
-            });
-          } finally {
-            setPaymentLoading(false);
-          }
-        },
-        prefill: {
-          name: customerInfo.name,
-          email: customerInfo.email,
-          contact: customerInfo.phone,
-        },
-        theme: { color: "#4F46E5" },
-        modal: {
-          ondismiss: () => {
-            setPaymentLoading(false);
-            toast({ title: "Payment Cancelled", description: "You cancelled the payment process." });
-          },
-        },
-      };
-
-      const rzp = new window.Razorpay(options);
-      rzp.open();
+      toast({ title: "Payment Successful!", description: "Your order has been confirmed." });
+      navigate(`/order/${createdOrder.orderId}`);
     } catch (err) {
       toast({
         variant: "destructive",
         title: "Checkout Error",
         description: err instanceof Error ? err.message : "Failed to process checkout",
       });
+    } finally {
       setPaymentLoading(false);
     }
   };

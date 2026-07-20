@@ -5,7 +5,6 @@ import connectDB from './db/db.js';
 import cartRoutes from './routes/cart.routes.js';
 import orderRoutes from './routes/order.routes.js';
 import productRoutes from './routes/product.routes.js';
-import paymentRoutes from './routes/payment.routes.js';
 import nfcRoutes from './routes/nfc.routes.js';
 import configRoutes from './routes/config.routes.js';
 
@@ -15,11 +14,11 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors({
-  origin: ['https://smart-cart-drab.vercel.app','http://localhost:5173'], 
-  credentials: true, 
+  origin: ['https://smart-cart-drab.vercel.app', 'http://localhost:5173'],
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Set-Cookie', 'Cookie', 'X-Requested-With'],
-}));  
+}));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -27,7 +26,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/products', productRoutes);
-app.use('/api/payment', paymentRoutes);
 app.use('/api/nfc', nfcRoutes);
 app.use('/api/config', configRoutes);
 
@@ -38,7 +36,7 @@ app.get('/ping', (req, res) => res.status(200).send('pong'));
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
   const message = err.message || 'Something went wrong';
-  
+
   res.status(statusCode).json({
     success: false,
     statusCode,

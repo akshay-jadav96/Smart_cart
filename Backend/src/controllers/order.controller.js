@@ -33,7 +33,13 @@ export const createOrder = asyncHandler(async (req, res) => {
   const tax = subtotal * TAX_RATE;
   const totalAmount = subtotal + tax;
 
-  // Create order
+  const paymentInfoData = {
+    ...paymentInfo,
+    method: paymentInfo.method || 'cash',
+    status: paymentInfo.status || 'completed',
+  };
+
+  // Create order and mark it as confirmed since payment is completed here
   const order = await Order.create({
     orderId,
     cartId,
@@ -42,13 +48,15 @@ export const createOrder = asyncHandler(async (req, res) => {
     tax,
     totalAmount,
     customerInfo,
-    paymentInfo,
+    paymentInfo: paymentInfoData,
     notes: notes || '',
-    status: 'pending',
+    status: 'confirmed',
   });
 
-  // Update cart status to checked out
-  cart.status = 'checkedout';
+  // Reset cart after checkout
+  cart.items = [];
+  cart.totalAmount = 0;
+  cart.status = 'active';
   await cart.save();
 
   res.status(201).json(
